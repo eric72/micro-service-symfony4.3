@@ -35,8 +35,6 @@ services:
             $logger: 'monolog.logger.user_logs'
         tags:
             - { name: monolog.logger, channel: user_logs }
-           # - { name: UserSubscriber.updatingUser, event: updateUser, method: updatingUser }
-           # - { name: doctrine.event_listener, event: getSubscribedEvents}
 
     App\EventListener\UserSubscriber: '@UserSubscriber'
 
