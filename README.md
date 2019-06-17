@@ -1,9 +1,4 @@
 ---------------------------
-Install project
----------------------------
-composer install
-
----------------------------
 Setup le projet
 ---------------------------
 composer install
