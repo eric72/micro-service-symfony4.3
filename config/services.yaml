@@ -1,0 +1,72 @@
+# This file is the entry point to configure your own services.
+# Files in the packages/ subdirectory configure your dependencies.
+
+# Put parameters here that don't need to change on each machine where the app is deployed
+# https://symfony.com/doc/current/best_practices/configuration.html#application-related-configuration
+parameters:
+    UserSubscriber.updatingUser: updatingUser
+
+services:
+    # default configuration for services in *this* file
+    _defaults:
+        autowire: true      # Automatically injects dependencies in your services.
+        autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+
+    # makes classes in src/ available to be used as services
+    # this creates a service per class whose id is the fully-qualified class name
+    App\:
+        resource: '../src/*'
+        exclude: '../src/{DependencyInjection,Entity,Migrations,Tests,Kernel.php}'
+
+    # controllers are imported separately to make sure services can be injected
+    # as action arguments even if you don't extend any base controller class
+    App\Controller\:
+        resource: '../src/Controller'
+        tags: ['controller.service_arguments']
+
+    # add more service definitions when explicit configuration is needed
+    # please note that last definitions always *replace* previous ones
+
+    UserSubscriber:
+        public: true
+        class: App\EventListener\UserSubscriber
+        autowire: true
+        arguments:
+            $logger: 'monolog.logger.user_logs'
+        tags:
+            - { name: monolog.logger, channel: user_logs }
+           # - { name: UserSubscriber.updatingUser, event: updateUser, method: updatingUser }
+           # - { name: doctrine.event_listener, event: getSubscribedEvents}
+
+    App\EventListener\UserSubscriber: '@UserSubscriber'
+
+    App\Controller\UserController:
+        class: App\Controller\UserController
+        arguments:
+            $logger: '@logger'
+        tags:
+            - 'controller.service_arguments'
+            - { name: monolog.logger, channel: user_logs}
+
+    logger:
+        alias: 'monolog.logger'
+        public: true
+
+monolog:
+    handlers:
+        main:
+            type:         fingers_crossed
+            action_level: error
+            handler:      nested
+        nested:
+            type:  stream
+            path:  "%kernel.logs_dir%/%kernel.environment%.log"
+            level: debug
+            max_files: 7
+        console:
+            type: console
+        user_logs:
+            type:     stream
+            max_files: 10
+            path: "%kernel.logs_dir%/user_logs.log"
+            channels: user_logs
